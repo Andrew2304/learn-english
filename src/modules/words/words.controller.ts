@@ -17,10 +17,10 @@ import { join } from 'path';
 export class WordsController {
   constructor(private readonly wordsService: WordsService) {}
 
-  @Post()
-  create(@Body() createWordDto: CreateWordDto) {
-    return this.wordsService.create(createWordDto);
-  }
+  // @Post()
+  // create(@Body() createWordDto: CreateWordDto) {
+  //   return this.wordsService.create(createWordDto);
+  // }
 
   @Get()
   findAll(@Query() { take, skip }) {
@@ -43,18 +43,18 @@ export class WordsController {
     return this.wordsService.syncSound();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.wordsService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.wordsService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWordDto: UpdateWordDto) {
-    return this.wordsService.update(+id, updateWordDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateWordDto: UpdateWordDto) {
+  //   return this.wordsService.update(+id, updateWordDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.wordsService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.wordsService.remove(+id);
+  // }
 }

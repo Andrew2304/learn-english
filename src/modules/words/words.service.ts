@@ -5,8 +5,9 @@ import * as fs from 'fs';
 import * as csv from 'csv-parser';
 import { parseWordDefinition } from '../../helpers';
 import { Word } from './entities/word.entity';
+import { History } from '../histories/entities/history.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import axios from 'axios';
 
 @Injectable()
@@ -14,6 +15,8 @@ export class WordsService {
   constructor(
     @InjectRepository(Word)
     private wordsRepository: Repository<Word>,
+    @InjectRepository(History)
+    private historiesRepository: Repository<History>,
   ) {}
   async create(createWordDto: CreateWordDto) {
     return await this.wordsRepository.save({ ...createWordDto });
@@ -33,8 +36,20 @@ export class WordsService {
       skip,
     });
 
+    const ids: number[] = result.map(item => item.id);
+    const histories = await this.historiesRepository.find({
+      where: {
+        wordId: In(ids),
+      }
+    });
+
     return {
-      data: result,
+      data: result.map(item => (
+        {
+          ...item,
+          listen: histories.find(item1 => item.id === item1.wordId && item1.type === "LISTEN"),
+          write: histories.find(item1 => item.id === item1.wordId && item1.type === "WRITE"),
+        })),
       count: total,
     };
   }

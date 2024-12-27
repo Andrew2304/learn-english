@@ -3,6 +3,7 @@ import { WordsModule } from './modules/words/words.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppConfig, DatabaseConfig } from './configs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HistoriesModule } from './modules/histories/histories.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       inject: [ConfigService],
     }),
     WordsModule,
+    HistoriesModule,
   ],
   controllers: [],
   providers: [],
