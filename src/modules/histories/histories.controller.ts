@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { HistoriesService } from './histories.service';
 import { CreateHistoryDto } from './dto/create-history.dto';
@@ -20,10 +21,10 @@ export class HistoriesController {
     return this.historiesService.create(createHistoryDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.historiesService.findAll();
-  // }
+  @Get()
+  summery(@Query() { take, skip }) {
+    return this.historiesService.summery(take, skip);
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {

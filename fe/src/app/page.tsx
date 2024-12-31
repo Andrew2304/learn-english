@@ -4,10 +4,10 @@
 'use client';
 
 import { SoundOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Flex, Input, notification, Pagination, PaginationProps, Row, Select, Tag } from 'antd';
+import { Button, Card, Col, Flex, Input, notification, Pagination, PaginationProps, Row, Select, Switch, Tag } from 'antd';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { apiUrl, LearnType, WordType } from '../helpers';
+import { apiUrl, LearnType, LogType, WordType } from '../helpers';
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
@@ -19,17 +19,19 @@ export default function Home() {
     page: 1
   });
   const [data, setData] = useState<any>(null);
+  const [historyData, setHistoryData] = useState<any>(null);
   const [typeLearn, setTypeLearn] = useState(LearnType.LEARN_LISTEN);
   const [typeWord, setTypeWord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isShowHistory, setIsShowHistory] = useState(false);
   const [error, setError] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [api, contextHolder] = notification.useNotification();
 
-  const openNotificationWithIcon = (type: NotificationType) => {
+  const openNotificationWithIcon = (type: NotificationType, message?: string) => {
     api[type]({
       message: '',
-      description: 'Write success',
+      description: message ? message : 'Write success',
       duration: 2,
     });
   };
@@ -53,11 +55,30 @@ export default function Home() {
     }
   };
 
-  const writeWordSuccessLog = async (wordId: number, type: number) => {
+  const fetchHistoryData = async () => {
+    setLoading(true);
+    try {
+      // const take = 10;
+      // const skip = (params.page - 1) * take;
+      const response = await axios.get(
+        `${apiUrl}/histories?take=1000&skip=0`,
+      );
+      setHistoryData(response.data);
+    } catch (err: any) {
+      setError(err.message);
+      console.log('error fetchHistoryData');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const writeWordSuccessLog = async (wordId: number, type: LogType, description?: string) => {
     try {
       await axios.post(`${apiUrl}/histories`, {
         wordId,
-        type: type === 1 ? 'LISTEN' : 'WRITE',
+        type: LogType[type],
+        description,
       });
     } catch (err: any) {
       setError(err.message);
@@ -74,7 +95,7 @@ export default function Home() {
 
     audio.onended = () => {
       setIsPlaying(false);
-      writeWordSuccessLog(item?.id, 1);
+      writeWordSuccessLog(item?.id, LogType.LISTEN);
     };
   }
 
@@ -95,9 +116,13 @@ export default function Home() {
   }
 
   const onChangeInput = (text: string, item: any) => {
-    if (text === item.name) {
-      writeWordSuccessLog(item.id, 2);
+    if (text === item.name.toLowerCase()) {
+      writeWordSuccessLog(item.id, LogType.WRITE);
       openNotificationWithIcon('success');
+    }
+    if (text.length === item.name.length && text !== item.name.toLowerCase()) {
+      writeWordSuccessLog(item.id, LogType.WRITE_ERROR, text);
+      openNotificationWithIcon('error', 'Write error');
     }
   };
 
@@ -112,8 +137,12 @@ export default function Home() {
       return { ...prev, page: 1, wordType: value };
     });
   };
+  const changeIsShowHistory = (value: any) => {
+    setIsShowHistory(value);
+  };
   const onChangeFind = () => {
     fetchData();
+    fetchHistoryData();
   };
 
   const onChangePagination: PaginationProps['onChange'] = (pageNumber) => {
@@ -132,6 +161,7 @@ export default function Home() {
   
   useEffect(() => {
     fetchData();
+    fetchHistoryData();
   }, [params]);
   
   return (
@@ -179,7 +209,7 @@ export default function Home() {
               },
             ]}
           />
-
+          <Switch onChange={changeIsShowHistory}/> <span>History</span>
           <Input
             placeholder="Tìm cần tìm"
             className="ml-2"
@@ -219,40 +249,115 @@ export default function Home() {
               </Flex>
 
               <Flex justify={'flex-start'} align={'center'}>
-                <span>{item?.translation}</span>
-              </Flex>
-
-              <Flex justify={'flex-end'} align={'center'}>
-                {item?.listen && (
-                  <Tag color="blue">L-{item?.listen?.count}</Tag>
-                )}
-                {item?.write && (
-                  <Tag color="green">W-{item?.write?.count}</Tag>
-                )}
-                <Button
-                  icon={<SoundOutlined />}
-                  onClick={() => handleSoundOne(item)}
-                />
-                <Button
-                  // type="primary"
-                  className="ml-1"
-                  icon={<SoundOutlined />}
-                  onClick={() => handleSoundRepeat(item)}
-                />
+                <b>{item?.translation}</b>
               </Flex>
 
               {typeLearn === LearnType.LEARN_VOCABULARY && (
-                <Flex justify={'flex-start'} align={'center'} className="mt-1">
+                <Flex justify={'flex-start'} align={'center'} className="mt-2">
                   <Input.OTP
                     length={item.name.length}
                     onChange={(value) => onChangeInput(value, item)}
                   />
                 </Flex>
               )}
+
+              <Flex justify={'flex-end'} align={'center'} className="mt-2">
+                {item?.listen && (
+                  <Tag color="blue">L-{item?.listen?.count}</Tag>
+                )}
+                {item?.write && <Tag color="green">W-{item?.write?.count}</Tag>}
+                <Button
+                  tabIndex={-1}
+                  icon={<SoundOutlined />}
+                  onClick={() => handleSoundOne(item)}
+                />
+                <Button
+                  tabIndex={-1}
+                  // type="primary"
+                  className="ml-1"
+                  icon={<SoundOutlined />}
+                  onClick={() => handleSoundRepeat(item)}
+                />
+              </Flex>
             </Card>
           ))}
         </Flex>
       </Row>
+
+      <Row gutter={24} className="mt-4">
+        <Col span={24}>
+          <Card title="Card title" bordered={false} style={{ width: 300 }}>
+            <Flex justify={'space-between'} align={'center'}>
+              <span>Tồng từ đúng:</span>
+              <span>{historyData?.learnedCount}</span>
+            </Flex>
+            <Flex justify={'space-between'} align={'center'}>
+              <span>Tồng từ sai:</span>
+              <span>{historyData?.wordErrorData?.total}</span>
+            </Flex>
+            <Flex justify={'space-between'} align={'center'}>
+              <span>Tổng từ chưa học:</span>
+              <span>
+                {data?.count -
+                  historyData?.learnedCount -
+                  historyData?.wordErrorData?.total}
+              </span>
+            </Flex>
+          </Card>
+        </Col>
+      </Row>
+
+      {isShowHistory === true && (
+        <Row gutter={24} className="mt-4">
+          <Flex wrap gap="20px">
+            {historyData?.wordErrorData?.data?.map((item: any) => (
+              <Card
+                title={`${getTitle(item?.name)} - ${item.count}`}
+                bordered={false}
+                style={{ width: 250, textAlign: 'center' }}
+                key={item?.id}
+              >
+                <Flex justify={'space-between'} align={'center'}>
+                  <span>/{item?.pronunciation}/</span>
+                  <span>{item?.type}</span>
+                </Flex>
+
+                <Flex justify={'flex-start'} align={'center'}>
+                  <b>{item?.translation}</b>
+                </Flex>
+
+                {typeLearn === LearnType.LEARN_VOCABULARY && (
+                  <Flex justify={'flex-start'} align={'center'} className="mt-2">
+                    <Input.OTP
+                      length={item.name.length}
+                      onChange={(value) => onChangeInput(value, item)}
+                    />
+                  </Flex>
+                )}
+
+                <Flex justify={'flex-end'} align={'center'} className="mt-2">
+                  {item?.listen && (
+                    <Tag color="blue">L-{item?.listen?.count}</Tag>
+                  )}
+                  {item?.write && <Tag color="green">W-{item?.write?.count}</Tag>}
+                  <Button
+                    tabIndex={-1}
+                    icon={<SoundOutlined />}
+                    onClick={() => handleSoundOne(item)}
+                  />
+                  <Button
+                    tabIndex={-1}
+                    // type="primary"
+                    className="ml-1"
+                    icon={<SoundOutlined />}
+                    onClick={() => handleSoundRepeat(item)}
+                  />
+                </Flex>
+              </Card>
+            ))}
+          </Flex>
+        </Row>
+      )}
 
       {contextHolder}
     </div>

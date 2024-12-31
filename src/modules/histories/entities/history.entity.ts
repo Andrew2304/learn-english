@@ -1,5 +1,6 @@
-import { Column, Entity, Unique } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../../base.entity';
+import { Word } from '../../words/entities/word.entity';
 
 @Entity()
 export class History extends BaseEntity {
@@ -17,4 +18,8 @@ export class History extends BaseEntity {
 
   @Column({ type: 'text', name: 'description', nullable: true })
   public description: string | null;
+
+  @ManyToOne(() => Word)
+  @JoinColumn({ name: "word_id", referencedColumnName: "id" })
+  word: Word | null;
 }

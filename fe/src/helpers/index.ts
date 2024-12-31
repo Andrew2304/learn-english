@@ -8,4 +8,10 @@ export enum WordType {
   LEARN = 'LEARN',
 }
 
+export enum LogType {
+  LISTEN = "LISTEN",
+  WRITE = "WRITE",
+  WRITE_ERROR = "WRITE_ERROR",
+}
+
 export const apiUrl = process.env.NEXT_PUBLIC_API_URL;

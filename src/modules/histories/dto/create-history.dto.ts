@@ -6,4 +6,7 @@ export class CreateHistoryDto {
 
   @ApiProperty()
   type: string;
+
+  @ApiProperty()
+  description?: string;
 }

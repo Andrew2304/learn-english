@@ -1,5 +1,6 @@
-import { Column, Entity, Unique } from 'typeorm';
+import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { BaseEntity } from '../../../base.entity';
+import { History } from '../../histories/entities/history.entity';
 
 @Entity()
 @Unique('UNIQUE_WORD', ['name', 'deletedAt'])
@@ -36,4 +37,9 @@ export class Word extends BaseEntity {
 
   @Column({ type: 'int', name: 'order_number', nullable: false, default: 100 })
   public orderNumber: number;
+
+  @OneToMany(() => History, (type: History) => type.word, {
+    cascade: true,
+  })
+  histories: History[];
 }
