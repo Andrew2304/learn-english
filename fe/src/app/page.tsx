@@ -7,7 +7,8 @@ import { SoundOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Flex, Input, notification, Pagination, PaginationProps, Row, Select, Switch, Tag } from 'antd';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { apiUrl, LearnType, LogType, WordType } from '../helpers';
+import { apiUrl, LearnType, LogType, sleep, WordType } from '../helpers';
+import WordCard from './components/WordCard';
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
@@ -16,7 +17,8 @@ export default function Home() {
   const [params, setParams] = useState<any>({
     wordType: null,
     keyword: null,
-    page: 1
+    page: 1,
+    size: 10
   });
   const [data, setData] = useState<any>(null);
   const [historyData, setHistoryData] = useState<any>(null);
@@ -41,10 +43,9 @@ export default function Home() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const take = 10;
-      const skip = (params.page - 1) * take;
+      const skip = (params.page - 1) * params.size;
       const response = await axios.get(
-        `${apiUrl}/words?take=10&skip=${skip}&wordType=${params.wordType}&keyword=${params.keyword}`,
+        `${apiUrl}/words?take=${params.size}&skip=${skip}&wordType=${params.wordType}&keyword=${params.keyword}`,
       );
       setData(response.data);
     } catch (err: any) {
@@ -89,7 +90,7 @@ export default function Home() {
   };
   
   const handleSoundOne = (item: any) => {
-    const audio = new Audio(item?.pronunciationLink); // Replace with your sound file path
+    const audio = new Audio(item?.pronunciationLink);
     audio.play();
     setIsPlaying(true);
 
@@ -101,7 +102,7 @@ export default function Home() {
 
   const handleSoundRepeat = (item: any) => {
     let count = 1;
-    const audio = new Audio(item?.pronunciationLink); // Replace with your sound file path
+    const audio = new Audio(item?.pronunciationLink);
     audio.play();
     setIsPlaying(true);
 
@@ -113,6 +114,16 @@ export default function Home() {
         else audio.play();
       }, 500)
     };
+  }
+  
+
+  const  onPlayAll = async() => {
+    for (let i = 0; i < data?.data?.length - 1; i++) {
+      const item = data?.data[i];
+      const audio = new Audio(item?.pronunciationLink);
+      audio.play();
+      await sleep(1500);
+    }
   }
 
   const onChangeInput = (text: string, item: any) => {
@@ -150,7 +161,11 @@ export default function Home() {
       return {...prev, page: pageNumber };
     })
   };
-
+  const onShowSizeChange = (currentPage: number, size: number) => {
+    setParams((prev: any) => {
+      return { ...prev, page: currentPage, size };
+    });
+  }
   const getTitle = (title: string) => {
     title = title.toLowerCase();
     if (typeLearn === LearnType.LEARN_VOCABULARY) return `${title[0]}${'*'.padEnd(title.length - 1, '*')}`;
@@ -209,16 +224,24 @@ export default function Home() {
               },
             ]}
           />
-          <Switch onChange={changeIsShowHistory}/> <span>History</span>
+          <Switch
+            className="ml-2"
+            onChange={changeIsShowHistory}
+            checkedChildren="Hide history"
+            unCheckedChildren="Show history"
+          />
           <Input
-            placeholder="Tìm cần tìm"
+            placeholder="Enter for find: word ..."
             className="ml-2"
             style={{ width: '200px' }}
           />
         </Col>
       </Row>
 
-      <Button type="primary" className="mt-4" onClick={onChangeFind}>
+      <Button type="default" className="mt-4" onClick={onPlayAll}>
+        Play all
+      </Button>
+      <Button type="primary" className="mt-4 ml-2" onClick={onChangeFind}>
         Refresh
       </Button>
 
@@ -226,10 +249,12 @@ export default function Home() {
         <Col span={24}>
           <Pagination
             total={data?.count}
+            showTotal={(total, range) => `${range[0]}-${range[1]} | ${total}`}
             onChange={onChangePagination}
+            onShowSizeChange={onShowSizeChange}
             showSizeChanger
             showQuickJumper
-            showTotal={(total) => `Total ${total} items`}
+            // showTotal={(total) => `Total ${total} items`}
           />
         </Col>
       </Row>
@@ -237,126 +262,67 @@ export default function Home() {
       <Row gutter={24} className="mt-4">
         <Flex wrap gap="20px">
           {data?.data?.map((item: any) => (
-            <Card
-              title={`${getTitle(item?.name)}`}
-              bordered={false}
-              style={{ width: 250, textAlign: 'center' }}
-              key={item?.id}
-            >
-              <Flex justify={'space-between'} align={'center'}>
-                <span>/{item?.pronunciation}/</span>
-                <span>{item?.type}</span>
-              </Flex>
-
-              <Flex justify={'flex-start'} align={'center'}>
-                <b>{item?.translation}</b>
-              </Flex>
-
-              {typeLearn === LearnType.LEARN_VOCABULARY && (
-                <Flex justify={'flex-start'} align={'center'} className="mt-2">
-                  <Input.OTP
-                    length={item.name.length}
-                    onChange={(value) => onChangeInput(value, item)}
-                  />
-                </Flex>
-              )}
-
-              <Flex justify={'flex-end'} align={'center'} className="mt-2">
-                {item?.listen && (
-                  <Tag color="blue">L-{item?.listen?.count}</Tag>
-                )}
-                {item?.write && <Tag color="green">W-{item?.write?.count}</Tag>}
-                <Button
-                  tabIndex={-1}
-                  icon={<SoundOutlined />}
-                  onClick={() => handleSoundOne(item)}
-                />
-                <Button
-                  tabIndex={-1}
-                  // type="primary"
-                  className="ml-1"
-                  icon={<SoundOutlined />}
-                  onClick={() => handleSoundRepeat(item)}
-                />
-              </Flex>
-            </Card>
+            <WordCard
+              key={item.id}
+              item={item}
+              typeLearn={typeLearn}
+              getTitle={getTitle}
+              onChangeInput={onChangeInput}
+              handleSoundOne={handleSoundOne}
+              handleSoundRepeat={handleSoundRepeat}
+            />
           ))}
         </Flex>
       </Row>
 
-      <Row gutter={24} className="mt-4">
-        <Col span={24}>
-          <Card title="Card title" bordered={false} style={{ width: 300 }}>
-            <Flex justify={'space-between'} align={'center'}>
-              <span>Tồng từ đúng:</span>
-              <span>{historyData?.learnedCount}</span>
-            </Flex>
-            <Flex justify={'space-between'} align={'center'}>
-              <span>Tồng từ sai:</span>
-              <span>{historyData?.wordErrorData?.total}</span>
-            </Flex>
-            <Flex justify={'space-between'} align={'center'}>
-              <span>Tổng từ chưa học:</span>
-              <span>
-                {data?.count -
-                  historyData?.learnedCount -
-                  historyData?.wordErrorData?.total}
-              </span>
-            </Flex>
-          </Card>
-        </Col>
-      </Row>
-
       {isShowHistory === true && (
-        <Row gutter={24} className="mt-4">
-          <Flex wrap gap="20px">
-            {historyData?.wordErrorData?.data?.map((item: any) => (
+        <>
+          <Row gutter={24} className="mt-4">
+            <Col span={24}>
               <Card
-                title={`${getTitle(item?.name)} - ${item.count}`}
+                title="Summary"
                 bordered={false}
-                style={{ width: 250, textAlign: 'center' }}
-                key={item?.id}
+                style={{ width: 300, textAlign: 'center' }}
               >
                 <Flex justify={'space-between'} align={'center'}>
-                  <span>/{item?.pronunciation}/</span>
-                  <span>{item?.type}</span>
+                  <span>Tồng từ:</span>
+                  <b>{historyData?.wordTotal}</b>
                 </Flex>
-
-                <Flex justify={'flex-start'} align={'center'}>
-                  <b>{item?.translation}</b>
+                <Flex justify={'space-between'} align={'center'}>
+                  <span>Tồng từ đúng:</span>
+                  <b style={{ color: '#1890ff' }}>
+                    {historyData?.learnedCount}
+                  </b>
                 </Flex>
-
-                {typeLearn === LearnType.LEARN_VOCABULARY && (
-                  <Flex justify={'flex-start'} align={'center'} className="mt-2">
-                    <Input.OTP
-                      length={item.name.length}
-                      onChange={(value) => onChangeInput(value, item)}
-                    />
-                  </Flex>
-                )}
-
-                <Flex justify={'flex-end'} align={'center'} className="mt-2">
-                  {item?.listen && (
-                    <Tag color="blue">L-{item?.listen?.count}</Tag>
-                  )}
-                  {item?.write && <Tag color="green">W-{item?.write?.count}</Tag>}
-                  <Button
-                    tabIndex={-1}
-                    icon={<SoundOutlined />}
-                    onClick={() => handleSoundOne(item)}
-                  />
-                  <Button
-                    tabIndex={-1}
-                    // type="primary"
-                    className="ml-1"
-                    icon={<SoundOutlined />}
-                    onClick={() => handleSoundRepeat(item)}
-                  />
+                <Flex justify={'space-between'} align={'center'}>
+                  <span>Tồng từ sai:</span>
+                  <b style={{ color: '#fa8c16' }}>
+                    {historyData?.wordErrorData?.total}
+                  </b>
+                </Flex>
+                <Flex justify={'space-between'} align={'center'}>
+                  <span>Tổng từ chưa học:</span>
+                  <b>{historyData?.learningCount}</b>
                 </Flex>
               </Card>
-            ))}
-          </Flex>
-        </Row>
+            </Col>
+          </Row>
+          <Row gutter={24} className="mt-4">
+            <Flex wrap gap="20px">
+              {historyData?.wordErrorData?.data?.map((item: any) => (
+                <WordCard
+                  key={item.id}
+                  item={item}
+                  typeLearn={typeLearn}
+                  getTitle={getTitle}
+                  onChangeInput={onChangeInput}
+                  handleSoundOne={handleSoundOne}
+                  handleSoundRepeat={handleSoundRepeat}
+                />
+              ))}
+            </Flex>
+          </Row>
+        </>
       )}
 
       {contextHolder}

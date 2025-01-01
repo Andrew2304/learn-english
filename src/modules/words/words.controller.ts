@@ -23,8 +23,8 @@ export class WordsController {
   // }
 
   @Get()
-  findAll(@Query() { take, skip }) {
-    return this.wordsService.findAll(take, skip);
+  findAll(@Query() { take, skip, wordType }) {
+    return this.wordsService.findAll(take, skip, wordType);
   }
 
   @Get('/sync-csv')

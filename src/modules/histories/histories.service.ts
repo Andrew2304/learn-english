@@ -26,6 +26,14 @@ export class HistoriesService {
       }
     });
 
+    if (createHistoryDto.type === "WRITE") {
+      await this.historiesRepository.softDelete({
+        
+        wordId: createHistoryDto.wordId,
+        type: "WRITE_ERROR"
+      })
+    }
+
     if (!history) {
       history = await this.historiesRepository.save({ ...createHistoryDto, userId: 1 });
     } else {
@@ -40,7 +48,7 @@ export class HistoriesService {
     const take = takeQuery || 10;
     const skip = skipQuery || 0;
 
-    const [result, total] = await this.historiesRepository.findAndCount({
+    const [result, errorTotal] = await this.historiesRepository.findAndCount({
           where: {
             userId: 1,
             type: "WRITE_ERROR"
@@ -49,6 +57,14 @@ export class HistoriesService {
           take,
           skip,
         });
+
+    const wordTotal = await this.wordsRepository.count({
+      where: {
+        isActive: true,
+        isVerify: true,
+        pronunciationLink: Not(IsNull()),
+      }
+    });
     
     const learnedCount = await this.historiesRepository.count({
         where: {
@@ -58,12 +74,13 @@ export class HistoriesService {
       });
   
   
-      return {
-        learningCount: 0,
+    return {
+        wordTotal,
+        learningCount: wordTotal - learnedCount - errorTotal,
         learnedCount,
         wordErrorData: {
           data: result.map(item => ({...item, ...item.word})),
-          total
+          total: errorTotal
         }
       };
     }

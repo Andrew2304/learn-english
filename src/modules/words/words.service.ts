@@ -22,14 +22,26 @@ export class WordsService {
     return await this.wordsRepository.save({ ...createWordDto });
   }
 
-  async findAll(takeQuery: number, skipQuery: number) {
+  async findAll(takeQuery: number, skipQuery: number, wordType?: string) {
     const take = takeQuery || 10;
     const skip = skipQuery || 0;
+
+    const learnedWords = await this.historiesRepository.find({
+      where: {
+        type: "WRITE",
+      },
+      select: ["wordId"]
+    });
+
+    const learnedWordIds: number[] = learnedWords.map(item => item.wordId);
+    console.log("learnedWords", learnedWords);
+
     const [result, total] = await this.wordsRepository.findAndCount({
       where: {
         isActive: true,
         isVerify: true,
         pronunciationLink: Not(IsNull()),
+        id: wordType ? (wordType === "LEARNED" ? In(learnedWordIds) : Not(In(learnedWordIds))) : undefined
       },
       order: { name: 'ASC' },
       take,
@@ -136,13 +148,15 @@ export class WordsService {
     });
   }
 
-  private async getSound(word: string): Promise<string | undefined> {
+  private async getSound(word: string, accent: string = 'us'): Promise<string | undefined> {
     if (!word || typeof word === 'number') return null;
-    const url = `https://dict.laban.vn/ajax/getsound?accent=us&word=${word}`;
+    const url = `https://dict.laban.vn/ajax/getsound?accent=${accent}&word=${word.toLowerCase()}`;
     const res = await axios.get(url);
 
     if (res.status === 200) {
-      return res?.data?.data;
+      if (res?.data?.data) return res?.data?.data;
+
+      return accent === 'us' ? await this.getSound(word, 'uk') : undefined;
     } else {
       console.log('Error getSound', url);
       return undefined;
