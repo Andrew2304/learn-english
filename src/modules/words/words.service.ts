@@ -3,7 +3,7 @@ import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
-import { parseWordDefinition } from '../../helpers';
+import { parseWordDefinition, parseWordExample, parseWordTranslation } from '../../helpers';
 import { Word } from './entities/word.entity';
 import { History } from '../histories/entities/history.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,6 +22,10 @@ export class WordsService {
     return await this.wordsRepository.save({ ...createWordDto });
   }
 
+  async update(id: number, updateWordDto: UpdateWordDto) {
+    return await this.wordsRepository.update(id, { ...updateWordDto });
+  }
+
   async findAll(takeQuery: number, skipQuery: number, wordType?: string) {
     const take = takeQuery || 10;
     const skip = skipQuery || 0;
@@ -34,14 +38,13 @@ export class WordsService {
     });
 
     const learnedWordIds: number[] = learnedWords.map(item => item.wordId);
-    console.log("learnedWords", learnedWords);
 
     const [result, total] = await this.wordsRepository.findAndCount({
       where: {
         isActive: true,
         isVerify: true,
         pronunciationLink: Not(IsNull()),
-        id: wordType ? (wordType === "LEARNED" ? In(learnedWordIds) : Not(In(learnedWordIds))) : undefined
+        id: wordType === "" ? undefined : (wordType === "LEARNED" ? In(learnedWordIds) : Not(In(learnedWordIds)))
       },
       order: { name: 'ASC' },
       take,
@@ -70,10 +73,6 @@ export class WordsService {
     return `This action returns a #${id} word`;
   }
 
-  async update(id: number, updateWordDto: UpdateWordDto) {
-    return await this.wordsRepository.save({ ...updateWordDto });
-  }
-
   remove(id: number) {
     return `This action removes a #${id} word`;
   }
@@ -92,20 +91,49 @@ export class WordsService {
     const wordRows = data.filter((item) =>
       item['BUT FIRST, ENGLISH!'].includes('('),
     );
-    // const exampleRows = data.filter((item) =>
-    //   item['BUT FIRST, ENGLISH!'].includes('Example:'),
-    // );
+    const exampleRows = data.filter((item) =>
+      item['BUT FIRST, ENGLISH!'].includes('Example:'),
+    );
     // const translationRows = data.filter((item) =>
     //   item['BUT FIRST, ENGLISH!'].includes('Translation:'),
     // );
 
-    for (const wordRow of wordRows) {
-      const word = parseWordDefinition(wordRow['BUT FIRST, ENGLISH!']);
+    // for (const wordRow of wordRows) {
+    //   const word = parseWordDefinition(wordRow['BUT FIRST, ENGLISH!']);
 
-      if (word) {
-        // rows.push(word);
-        await this.create(word as CreateWordDto);
+    //   if (word) {
+    //     await this.create(word as CreateWordDto);
+    //   }
+    // }
+
+    for (let index = 0; index < data.length - 1; index++) {
+      const item = data[index];
+      
+      if (item['BUT FIRST, ENGLISH!'].includes('(')) {
+        const wordRow = parseWordDefinition(item['BUT FIRST, ENGLISH!']);
+        const [example, phonetic] = parseWordExample(data[index + 1]['BUT FIRST, ENGLISH!']);
+        const translation = parseWordTranslation(data[index + 2]['BUT FIRST, ENGLISH!']);
+
+        // console.log("word", wordRow);
+        // console.log("example", example);
+        // console.log("phonetic", phonetic);
+
+        const word = await this.wordsRepository.findOne({
+          where: {
+            name: wordRow?.name,
+          },
+        });
+
+        console.log("word", word?.id)
+        console.log("word", translation)
+
+        if (word?.id) {
+          await this.update(word?.id, { ...word, example, description: phonetic, exampleTranslation: translation } as UpdateWordDto);
+        }
       }
+
+
+      console.log('index', index);
     }
 
     // console.log('exampleRows', exampleRows.length);
@@ -129,7 +157,7 @@ export class WordsService {
           ...word,
           isVerify: true,
           pronunciationLink,
-        } as CreateWordDto);
+        } as UpdateWordDto);
       }
     }
 

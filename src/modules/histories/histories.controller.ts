@@ -22,8 +22,8 @@ export class HistoriesController {
   }
 
   @Get()
-  summery(@Query() { take, skip }) {
-    return this.historiesService.summery(take, skip);
+  summary(@Query() { take, skip }) {
+    return this.historiesService.summary(take, skip);
   }
 
   // @Get(':id')

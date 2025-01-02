@@ -44,7 +44,7 @@ export class HistoriesService {
     return true;
   }
 
-  async summery(takeQuery: number, skipQuery: number) {
+  async summary(takeQuery: number, skipQuery: number) {
     const take = takeQuery || 10;
     const skip = skipQuery || 0;
 

@@ -15,10 +15,10 @@ type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
 export default function Home() {
   const [params, setParams] = useState<any>({
-    wordType: null,
-    keyword: null,
+    wordType: "",
+    keyword: "",
     page: 1,
-    size: 10
+    size: 8,
   });
   const [data, setData] = useState<any>(null);
   const [historyData, setHistoryData] = useState<any>(null);
@@ -37,8 +37,6 @@ export default function Home() {
       duration: 2,
     });
   };
-
-  // const total = 100;
 
   const fetchData = async () => {
     setLoading(true);
@@ -59,8 +57,6 @@ export default function Home() {
   const fetchHistoryData = async () => {
     setLoading(true);
     try {
-      // const take = 10;
-      // const skip = (params.page - 1) * take;
       const response = await axios.get(
         `${apiUrl}/histories?take=1000&skip=0`,
       );
@@ -180,7 +176,7 @@ export default function Home() {
   }, [params]);
   
   return (
-    <div className="max-w-screen-2xl items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] m-home">
+    <div className="max-w-screen-2xl items-center justify-items-center min-h-screen p-8 pb-20 gap-16 gap-16 font-[family-name:var(--font-geist-sans)] m-home">
       <Row gutter={24}>
         <Col span={24}>
           <Select
@@ -238,12 +234,14 @@ export default function Home() {
         </Col>
       </Row>
 
-      <Button type="default" className="mt-4" onClick={onPlayAll}>
-        Play all
-      </Button>
-      <Button type="primary" className="mt-4 ml-2" onClick={onChangeFind}>
-        Refresh
-      </Button>
+      <Flex justify={'flex-end'} align={'center'}>
+        <Button type="default" className="mt-4" onClick={onPlayAll}>
+          Play all
+        </Button>
+        <Button type="primary" className="mt-4 ml-2" onClick={onChangeFind}>
+          Refresh
+        </Button>
+      </Flex>
 
       <Row gutter={24} className="mt-4">
         <Col span={24}>
@@ -254,25 +252,29 @@ export default function Home() {
             onShowSizeChange={onShowSizeChange}
             showSizeChanger
             showQuickJumper
-            // showTotal={(total) => `Total ${total} items`}
+            pageSize={params.size}
+            current={params.page}
+            pageSizeOptions={['8', '16', '64', '160']}
           />
         </Col>
       </Row>
 
       <Row gutter={24} className="mt-4">
-        <Flex wrap gap="20px">
-          {data?.data?.map((item: any) => (
-            <WordCard
-              key={item.id}
-              item={item}
-              typeLearn={typeLearn}
-              getTitle={getTitle}
-              onChangeInput={onChangeInput}
-              handleSoundOne={handleSoundOne}
-              handleSoundRepeat={handleSoundRepeat}
-            />
-          ))}
-        </Flex>
+        <Col span={24}>
+          <Flex wrap gap="20px">
+            {data?.data?.map((item: any) => (
+              <WordCard
+                key={item.id}
+                item={item}
+                typeLearn={typeLearn}
+                getTitle={getTitle}
+                onChangeInput={onChangeInput}
+                handleSoundOne={handleSoundOne}
+                handleSoundRepeat={handleSoundRepeat}
+              />
+            ))}
+          </Flex>
+        </Col>
       </Row>
 
       {isShowHistory === true && (

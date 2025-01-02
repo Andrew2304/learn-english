@@ -24,17 +24,33 @@ export default function WordCard({
     <Card
       title={`${getTitle(item?.name)}${item.count ? ` - ${item?.count}` : ''}`}
       bordered={false}
-      style={{ width: 250, textAlign: 'center' }}
+      style={{ width: 343, textAlign: 'center' }}
       key={item?.id}
     >
       <Flex justify={'space-between'} align={'center'}>
-        <span>/{item?.pronunciation}/</span>
+        <span style={{ color: '#1677ff' }}>/{item?.pronunciation}/</span>
         <span>{item?.type}</span>
       </Flex>
 
       <Flex justify={'flex-start'} align={'center'}>
         <b>{item?.translation}</b>
       </Flex>
+
+      {typeLearn === LearnType.LEARN_LISTEN && (
+        <>
+          <Flex justify={'flex-start'} align={'center'}>
+            <span className="text-left">{item?.example}</span>
+          </Flex>
+          <Flex justify={'flex-start'} align={'center'}>
+            <span style={{ color: '#8c8c8c' }} className="text-left">
+              /{item?.description}/
+            </span>
+          </Flex>
+          <Flex justify={'flex-start'} align={'center'}>
+            <span className="text-left">{item?.exampleTranslation}</span>
+          </Flex>
+        </>
+      )}
 
       {typeLearn === LearnType.LEARN_VOCABULARY && (
         <Flex justify={'flex-start'} align={'center'} className="mt-2">
