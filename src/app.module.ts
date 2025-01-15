@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppConfig, DatabaseConfig } from './configs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HistoriesModule } from './modules/histories/histories.module';
+import { LessonModule } from './modules/lesson/lesson.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HistoriesModule } from './modules/histories/histories.module';
     }),
     WordsModule,
     HistoriesModule,
+    LessonModule,
   ],
   controllers: [],
   providers: [],

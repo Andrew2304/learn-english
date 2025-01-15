@@ -22,25 +22,33 @@ export class HistoriesService {
       where: {
         userId: 1,
         wordId: createHistoryDto.wordId,
-        type: createHistoryDto.type
-      }
+        type: createHistoryDto.type,
+      },
     });
 
-    if (createHistoryDto.type === "WRITE") {
+    if (createHistoryDto.type === 'WRITE') {
       await this.historiesRepository.softDelete({
-        
         wordId: createHistoryDto.wordId,
-        type: "WRITE_ERROR"
-      })
+        type: 'WRITE_ERROR',
+      });
     }
 
     if (!history) {
-      history = await this.historiesRepository.save({ ...createHistoryDto, userId: 1 });
+      history = await this.historiesRepository.save({
+        ...createHistoryDto,
+        userId: 1,
+      });
     } else {
-      await this.historiesRepository.update(history.id, { description: createHistoryDto.description, count: history.count + 1 });
+      await this.historiesRepository.update(history.id, {
+        description: createHistoryDto.description,
+        count: history.count + 1,
+      });
     }
 
-    await this.historyDetailRepository.save({ historyId: history.id, description: createHistoryDto.description});
+    await this.historyDetailRepository.save({
+      historyId: history.id,
+      description: createHistoryDto.description,
+    });
     return true;
   }
 
@@ -49,41 +57,40 @@ export class HistoriesService {
     const skip = skipQuery || 0;
 
     const [result, errorTotal] = await this.historiesRepository.findAndCount({
-          where: {
-            userId: 1,
-            type: "WRITE_ERROR"
-          },
-          relations:["word"],
-          take,
-          skip,
-        });
+      where: {
+        userId: 1,
+        type: 'WRITE_ERROR',
+      },
+      relations: ['word'],
+      take,
+      skip,
+    });
 
     const wordTotal = await this.wordsRepository.count({
       where: {
         isActive: true,
         isVerify: true,
         pronunciationLink: Not(IsNull()),
-      }
+      },
     });
-    
+
     const learnedCount = await this.historiesRepository.count({
-        where: {
-          userId: 1,
-          type: "WRITE"
-        }
-      });
-  
-  
+      where: {
+        userId: 1,
+        type: 'WRITE',
+      },
+    });
+
     return {
-        wordTotal,
-        learningCount: wordTotal - learnedCount - errorTotal,
-        learnedCount,
-        wordErrorData: {
-          data: result.map(item => ({...item, ...item.word})),
-          total: errorTotal
-        }
-      };
-    }
+      wordTotal,
+      learningCount: wordTotal - learnedCount - errorTotal,
+      learnedCount,
+      wordErrorData: {
+        data: result.map((item) => ({ ...item, ...item.word })),
+        total: errorTotal,
+      },
+    };
+  }
 
   findAll() {
     return `This action returns all histories`;

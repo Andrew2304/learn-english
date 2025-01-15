@@ -4,7 +4,7 @@ import { Word } from '../../words/entities/word.entity';
 
 @Entity()
 export class History extends BaseEntity {
-  @Column({ type: 'int', name: 'word_id'})
+  @Column({ type: 'int', name: 'word_id' })
   public wordId: number;
 
   @Column({ type: 'int', name: 'user_id' })
@@ -20,6 +20,6 @@ export class History extends BaseEntity {
   public description: string | null;
 
   @ManyToOne(() => Word)
-  @JoinColumn({ name: "word_id", referencedColumnName: "id" })
+  @JoinColumn({ name: 'word_id', referencedColumnName: 'id' })
   word: Word | null;
 }

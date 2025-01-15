@@ -21,7 +21,9 @@ export const parseWordExample = (sentence: string) => {
   const questionMatch = sentence.match(questionRegex);
   const phoneticMatch = sentence.match(phoneticRegex);
 
-  const question = questionMatch ? questionMatch[1].trim().replace("Example:", "").trim() : null;
+  const question = questionMatch
+    ? questionMatch[1].trim().replace('Example:', '').trim()
+    : null;
   const phonetic = phoneticMatch ? phoneticMatch[1] : null;
 
   return question && phonetic ? [question, phonetic] : [null, null];
@@ -30,3 +32,13 @@ export const parseWordTranslation = (text: string) => {
   const match = text.match(/- Translation: (.+)/);
   return match ? match[1] : null;
 };
+
+export enum EQuestionType {
+  When = 'When',
+  Where = 'Where',
+  Who = 'Who',
+  Why = 'Why',
+  What = 'What',
+}
+
+export const USER_ID = 1;

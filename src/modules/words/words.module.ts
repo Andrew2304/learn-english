@@ -6,7 +6,10 @@ import { History } from '../histories/entities/history.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Word]), TypeOrmModule.forFeature([History])],
+  imports: [
+    TypeOrmModule.forFeature([Word]),
+    TypeOrmModule.forFeature([History]),
+  ],
   controllers: [WordsController],
   providers: [WordsService],
 })

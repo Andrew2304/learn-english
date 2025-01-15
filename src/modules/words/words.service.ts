@@ -3,7 +3,11 @@ import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
-import { parseWordDefinition, parseWordExample, parseWordTranslation } from '../../helpers';
+import {
+  parseWordDefinition,
+  parseWordExample,
+  parseWordTranslation,
+} from '../../helpers';
 import { Word } from './entities/word.entity';
 import { History } from '../histories/entities/history.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -32,39 +36,47 @@ export class WordsService {
 
     const learnedWords = await this.historiesRepository.find({
       where: {
-        type: "WRITE",
+        type: 'WRITE',
       },
-      select: ["wordId"]
+      select: ['wordId'],
     });
 
-    const learnedWordIds: number[] = learnedWords.map(item => item.wordId);
+    const learnedWordIds: number[] = learnedWords.map((item) => item.wordId);
 
     const [result, total] = await this.wordsRepository.findAndCount({
       where: {
         isActive: true,
         isVerify: true,
         pronunciationLink: Not(IsNull()),
-        id: wordType === "" ? undefined : (wordType === "LEARNED" ? In(learnedWordIds) : Not(In(learnedWordIds)))
+        id:
+          wordType === ''
+            ? undefined
+            : wordType === 'LEARNED'
+              ? In(learnedWordIds)
+              : Not(In(learnedWordIds)),
       },
       order: { name: 'ASC' },
       take,
       skip,
     });
 
-    const ids: number[] = result.map(item => item.id);
+    const ids: number[] = result.map((item) => item.id);
     const histories = await this.historiesRepository.find({
       where: {
         wordId: In(ids),
-      }
+      },
     });
 
     return {
-      data: result.map(item => (
-        {
-          ...item,
-          listen: histories.find(item1 => item.id === item1.wordId && item1.type === "LISTEN"),
-          write: histories.find(item1 => item.id === item1.wordId && item1.type === "WRITE"),
-        })),
+      data: result.map((item) => ({
+        ...item,
+        listen: histories.find(
+          (item1) => item.id === item1.wordId && item1.type === 'LISTEN',
+        ),
+        write: histories.find(
+          (item1) => item.id === item1.wordId && item1.type === 'WRITE',
+        ),
+      })),
       count: total,
     };
   }
@@ -108,11 +120,15 @@ export class WordsService {
 
     for (let index = 0; index < data.length - 1; index++) {
       const item = data[index];
-      
+
       if (item['BUT FIRST, ENGLISH!'].includes('(')) {
         const wordRow = parseWordDefinition(item['BUT FIRST, ENGLISH!']);
-        const [example, phonetic] = parseWordExample(data[index + 1]['BUT FIRST, ENGLISH!']);
-        const translation = parseWordTranslation(data[index + 2]['BUT FIRST, ENGLISH!']);
+        const [example, phonetic] = parseWordExample(
+          data[index + 1]['BUT FIRST, ENGLISH!'],
+        );
+        const translation = parseWordTranslation(
+          data[index + 2]['BUT FIRST, ENGLISH!'],
+        );
 
         // console.log("word", wordRow);
         // console.log("example", example);
@@ -124,14 +140,18 @@ export class WordsService {
           },
         });
 
-        console.log("word", word?.id)
-        console.log("word", translation)
+        console.log('word', word?.id);
+        console.log('word', translation);
 
         if (word?.id) {
-          await this.update(word?.id, { ...word, example, description: phonetic, exampleTranslation: translation } as UpdateWordDto);
+          await this.update(word?.id, {
+            ...word,
+            example,
+            description: phonetic,
+            exampleTranslation: translation,
+          } as UpdateWordDto);
         }
       }
-
 
       console.log('index', index);
     }
@@ -176,7 +196,10 @@ export class WordsService {
     });
   }
 
-  private async getSound(word: string, accent: string = 'us'): Promise<string | undefined> {
+  private async getSound(
+    word: string,
+    accent: string = 'us',
+  ): Promise<string | undefined> {
     if (!word || typeof word === 'number') return null;
     const url = `https://dict.laban.vn/ajax/getsound?accent=${accent}&word=${word.toLowerCase()}`;
     const res = await axios.get(url);
