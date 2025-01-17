@@ -25,14 +25,27 @@ export class LessonController {
     return this.lessonService.findAll();
   }
 
+  @Get('/topics')
+  findTopics() {
+    return this.lessonService.findTopics();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.lessonService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLessonDto: UpdateLessonDto) {
+  update(@Param('id') id: string, @Body() updateLessonDto: CreateLessonDto) {
     return this.lessonService.update(+id, updateLessonDto);
+  }
+
+  @Patch(':id/questions')
+  updateQuestions(
+    @Param('id') id: string,
+    @Body() updateLessonDto: UpdateLessonDto,
+  ) {
+    return this.lessonService.updateQuestions(+id, updateLessonDto);
   }
 
   // @Delete(':id')

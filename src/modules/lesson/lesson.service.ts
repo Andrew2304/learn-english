@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { CreateLessonDto } from './dto/create-lesson.dto';
-import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Lesson } from './entities/lesson.entity';
-import { In, Repository } from 'typeorm';
-import { LessonWord } from './entities/lesson-word.entity';
-import { LessonQuestion } from './entities/lesson-question.entity';
-import { LessonAnswer } from './entities/lesson-answer.entity';
+import * as dayjs from 'dayjs';
+import { In, Like, Repository } from 'typeorm';
 import { USER_ID } from '../../helpers';
 import { Word } from '../words/entities/word.entity';
+import { CreateLessonDto } from './dto/create-lesson.dto';
+import { UpdateLessonDto } from './dto/update-lesson.dto';
+import { LessonAnswer } from './entities/lesson-answer.entity';
+import { LessonQuestion } from './entities/lesson-question.entity';
+import { LessonWord } from './entities/lesson-word.entity';
+import { Lesson } from './entities/lesson.entity';
 
 @Injectable()
 export class LessonService {
@@ -25,23 +26,81 @@ export class LessonService {
     private wordsRepository: Repository<Word>,
   ) {}
   async create(createLessonDto: CreateLessonDto): Promise<number> {
-    const title = '111';
+    const code = dayjs().format('YYYYMMDD');
+    let number: number = 1;
+    const preLesson = await this.lessonsRepository.findOne({
+      where: { title: Like(`${code}%`) },
+    });
+
+    console.log(preLesson);
+
+    if (preLesson) {
+      number = +preLesson.title.split('-')[1] + 1;
+    }
     const lesson = await this.lessonsRepository.save({
       userId: USER_ID,
-      topic: createLessonDto.topic,
-      title,
+      topic: createLessonDto.topic?.toLowerCase(),
+      title: `${code}-${number}`,
       count: createLessonDto.words?.length,
     });
 
-    for (const word of createLessonDto.words) {
+    for (const item of createLessonDto.words) {
       const wordDB = await this.wordsRepository.findOne({
-        where: { name: word },
+        where: { name: item.description },
       });
 
       await this.lessonWordsRepository.save({
         wordId: wordDB?.id,
         lessonId: lesson.id,
+        description: item.description?.toLowerCase(),
+        type: item?.type?.toLowerCase(),
+        pronunciation: item?.pronunciation?.toLowerCase(),
+        translation: item?.translation?.toLowerCase(),
+      });
+    }
+
+    return lesson?.id;
+  }
+
+  async update(id: number, updateLessonDto: CreateLessonDto): Promise<number> {
+    const lesson = await this.lessonsRepository.findOne({
+      where: { id },
+      relations: ['lessonWords'],
+    });
+
+    const words: string[] = lesson?.lessonWords?.map(
+      (item) => item.description,
+    );
+    const inputWords: string[] = updateLessonDto.words?.map(
+      (item) => item.description,
+    );
+
+    const deleteWords = words.filter((item) => !inputWords.includes(item));
+    const insertWords = inputWords.filter((item) => !words.includes(item));
+
+    // delete
+    await this.lessonWordsRepository.softDelete({
+      lessonId: id,
+      description: In(deleteWords),
+    });
+
+    // insert
+    for (const word of insertWords) {
+      const wordDB = await this.wordsRepository.findOne({
+        where: { name: word },
+      });
+
+      const inputWord = updateLessonDto.words.find(
+        (item) => item.description === word,
+      );
+
+      await this.lessonWordsRepository.save({
+        wordId: wordDB?.id,
+        lessonId: lesson.id,
         description: word,
+        type: inputWord?.type,
+        pronunciation: inputWord?.pronunciation,
+        translation: inputWord?.translation,
       });
     }
 
@@ -50,8 +109,20 @@ export class LessonService {
 
   async findAll() {
     return await this.lessonsRepository.find({
-      relations: ['lessonWords'],
+      relations: [
+        'lessonWords',
+        'lessonWords.lessonQuestions',
+        'lessonWords.lessonQuestions.lessonAnswer',
+      ],
+      order: { id: 'DESC' },
     });
+  }
+  async findTopics() {
+    return await this.lessonsRepository
+      .createQueryBuilder('lesson')
+      .select('lesson.topic', 'topic')
+      .groupBy('lesson.topic')
+      .getRawMany();
   }
 
   async findOne(id: number) {
@@ -65,12 +136,14 @@ export class LessonService {
     });
   }
 
-  async update(id: number, updateLessonDto: UpdateLessonDto): Promise<number> {
+  async updateQuestions(
+    id: number,
+    updateLessonDto: UpdateLessonDto,
+  ): Promise<number> {
     // delete
-    const lessonWords = await this.lessonWordsRepository.find({
-      where: { lessonId: id },
-    });
-    const lessonWordIds: number[] = lessonWords.map((item) => item.id);
+    const lessonWordIds: number[] = updateLessonDto.contents.map(
+      (item: any) => item.lessonWordId,
+    );
     await this.lessonQuestionsRepository.softDelete({
       lessonWordId: In(lessonWordIds),
     });

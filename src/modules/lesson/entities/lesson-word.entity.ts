@@ -22,6 +22,15 @@ export class LessonWord extends BaseEntity {
   @Column({ type: 'text', name: 'description', nullable: true })
   public description: string | null;
 
+  @Column({ type: 'text', name: 'type', nullable: true })
+  public type: string | null;
+
+  @Column({ type: 'text', name: 'pronunciation', nullable: true })
+  public pronunciation: string | null;
+
+  @Column({ type: 'text', name: 'translation', nullable: true })
+  public translation: string | null;
+
   @ManyToOne(() => Lesson)
   @JoinColumn({ name: 'lesson_id', referencedColumnName: 'id' })
   lesson: Lesson | null;

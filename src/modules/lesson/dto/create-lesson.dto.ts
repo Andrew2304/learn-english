@@ -5,5 +5,10 @@ export class CreateLessonDto {
   topic: string;
 
   @ApiProperty()
-  words: string[];
+  words: {
+    description: string;
+    type?: string;
+    pronunciation?: string;
+    translation?: string;
+  }[];
 }
