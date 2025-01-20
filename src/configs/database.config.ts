@@ -14,7 +14,7 @@ export default registerAs('database', () => ({
   database: configService.get('POSTGRES_DB'),
   entities: [`${__dirname}/../../src/**/**/**/*.entity{.ts,.js}`],
   synchronize: false,
-  logging: false,
+  logging: true,
   migrations: [`${__dirname}/../../db/migrations/*{.ts,.js}`],
   migrationsTableName: 'migrations',
 }));

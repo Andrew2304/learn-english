@@ -30,7 +30,12 @@ export class WordsService {
     return await this.wordsRepository.update(id, { ...updateWordDto });
   }
 
-  async findAll(takeQuery: number, skipQuery: number, wordType?: string) {
+  async findAll(
+    takeQuery: number,
+    skipQuery: number,
+    userId: number,
+    wordType?: string,
+  ) {
     const take = takeQuery || 10;
     const skip = skipQuery || 0;
 
@@ -63,6 +68,7 @@ export class WordsService {
     const ids: number[] = result.map((item) => item.id);
     const histories = await this.historiesRepository.find({
       where: {
+        userId,
         wordId: In(ids),
       },
     });

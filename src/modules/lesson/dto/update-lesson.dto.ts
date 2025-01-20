@@ -4,6 +4,9 @@ import { EQuestionType } from '../../../helpers';
 export class UpdateLessonDto {
   @ApiProperty()
   contents: ContentDTO[];
+
+  @ApiProperty()
+  typeCount: number;
 }
 
 class ContentDTO {

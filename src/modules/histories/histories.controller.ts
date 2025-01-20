@@ -1,29 +1,28 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
-import { HistoriesService } from './histories.service';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { HeadersDecorator } from '../../decorators/headers.decorator';
 import { CreateHistoryDto } from './dto/create-history.dto';
-import { UpdateHistoryDto } from './dto/update-history.dto';
+import { HistoriesService } from './histories.service';
 
 @Controller('histories')
 export class HistoriesController {
   constructor(private readonly historiesService: HistoriesService) {}
 
   @Post()
-  create(@Body() createHistoryDto: CreateHistoryDto) {
-    return this.historiesService.create(createHistoryDto);
+  create(
+    @Body() createHistoryDto: CreateHistoryDto,
+    @HeadersDecorator('user-id') userId: number,
+  ) {
+    if (!userId) return null;
+    return this.historiesService.create(createHistoryDto, userId);
   }
 
   @Get()
-  summary(@Query() { take, skip }) {
-    return this.historiesService.summary(take, skip);
+  summary(
+    @Query() { take, skip },
+    @HeadersDecorator('user-id') userId: number,
+  ) {
+    if (!userId) return null;
+    return this.historiesService.summary(take, skip, userId);
   }
 
   // @Get(':id')

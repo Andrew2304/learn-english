@@ -11,4 +11,7 @@ export class CreateLessonDto {
     pronunciation?: string;
     translation?: string;
   }[];
+
+  @ApiProperty()
+  description?: string;
 }

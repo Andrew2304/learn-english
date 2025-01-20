@@ -2,6 +2,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
@@ -31,11 +32,14 @@ export class LessonWord extends BaseEntity {
   @Column({ type: 'text', name: 'translation', nullable: true })
   public translation: string | null;
 
+  @Column({ type: 'int', name: 'count', default: 0 })
+  public count: number;
+
   @ManyToOne(() => Lesson)
   @JoinColumn({ name: 'lesson_id', referencedColumnName: 'id' })
   lesson: Lesson | null;
 
-  @OneToOne(() => Word)
+  @ManyToOne(() => Word)
   @JoinColumn({ name: 'word_id', referencedColumnName: 'id' })
   word: Word | null;
 

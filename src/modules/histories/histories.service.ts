@@ -17,10 +17,10 @@ export class HistoriesService {
     @InjectRepository(Word)
     private wordsRepository: Repository<Word>,
   ) {}
-  async create(createHistoryDto: CreateHistoryDto) {
+  async create(createHistoryDto: CreateHistoryDto, userId: number) {
     let history = await this.historiesRepository.findOne({
       where: {
-        userId: 1,
+        userId,
         wordId: createHistoryDto.wordId,
         type: createHistoryDto.type,
       },
@@ -36,7 +36,7 @@ export class HistoriesService {
     if (!history) {
       history = await this.historiesRepository.save({
         ...createHistoryDto,
-        userId: 1,
+        userId,
       });
     } else {
       await this.historiesRepository.update(history.id, {
@@ -52,13 +52,13 @@ export class HistoriesService {
     return true;
   }
 
-  async summary(takeQuery: number, skipQuery: number) {
+  async summary(takeQuery: number, skipQuery: number, userId: number) {
     const take = takeQuery || 10;
     const skip = skipQuery || 0;
 
     const [result, errorTotal] = await this.historiesRepository.findAndCount({
       where: {
-        userId: 1,
+        userId,
         type: 'WRITE_ERROR',
       },
       relations: ['word'],
@@ -76,7 +76,7 @@ export class HistoriesService {
 
     const learnedCount = await this.historiesRepository.count({
       where: {
-        userId: 1,
+        userId,
         type: 'WRITE',
       },
     });

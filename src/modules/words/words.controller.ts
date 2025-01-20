@@ -1,17 +1,7 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
-import { WordsService } from './words.service';
-import { CreateWordDto } from './dto/create-word.dto';
-import { UpdateWordDto } from './dto/update-word.dto';
+import { Controller, Get, Query } from '@nestjs/common';
 import { join } from 'path';
+import { HeadersDecorator } from '../../decorators/headers.decorator';
+import { WordsService } from './words.service';
 
 @Controller('words')
 export class WordsController {
@@ -23,8 +13,12 @@ export class WordsController {
   // }
 
   @Get()
-  findAll(@Query() { take, skip, wordType }) {
-    return this.wordsService.findAll(take, skip, wordType);
+  findAll(
+    @Query() { take, skip, wordType },
+    @HeadersDecorator('user-id') userId: number,
+  ) {
+    if (!userId) return null;
+    return this.wordsService.findAll(take, skip, userId, wordType);
   }
 
   @Get('/sync-csv')
