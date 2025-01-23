@@ -29,6 +29,9 @@ export class LessonWord extends BaseEntity {
   @Column({ type: 'text', name: 'pronunciation', nullable: true })
   public pronunciation: string | null;
 
+  @Column({ type: 'text', name: 'pronunciation_link', nullable: true })
+  public pronunciationLink: string | null;
+
   @Column({ type: 'text', name: 'translation', nullable: true })
   public translation: string | null;
 

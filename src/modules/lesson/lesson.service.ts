@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
 import { In, Like, Repository } from 'typeorm';
-import { USER_ID } from '../../helpers';
 import { Word } from '../words/entities/word.entity';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -57,6 +56,7 @@ export class LessonService {
         description: item.description?.toLowerCase(),
         type: item?.type?.toLowerCase(),
         pronunciation: item?.pronunciation?.toLowerCase(),
+        pronunciationLink: item?.pronunciationLink,
         translation: item?.translation?.toLowerCase(),
       });
     }
@@ -76,20 +76,21 @@ export class LessonService {
 
     if (!lesson) return null;
 
-    const words: string[] = lesson?.lessonWords?.map(
-      (item) => item.description,
-    );
-    const inputWords: string[] = updateLessonDto.words?.map(
-      (item) => item.description,
-    );
+    const words = lesson.lessonWords;
+    const inputWords = updateLessonDto.words;
 
-    const deleteWords = words.filter((item) => !inputWords.includes(item));
-    const insertWords = inputWords.filter((item) => !words.includes(item));
+    const deleteWords: any[] = words.filter((item1) =>
+      inputWords.every((item2) => item1?.id !== item2?.id),
+    );
+    const insertWords = inputWords.filter((item1) => !item1?.id);
+    const updateWords = inputWords.filter((item1) =>
+      words.some((item2) => item1?.id === item2?.id),
+    );
 
     // delete
     await this.lessonWordsRepository.softDelete({
       lessonId: id,
-      description: In(deleteWords),
+      id: In(deleteWords.map((item: any) => item.id)),
     });
 
     // update lesson
@@ -102,20 +103,24 @@ export class LessonService {
     // insert words
     for (const word of insertWords) {
       const wordDB = await this.wordsRepository.findOne({
-        where: { name: word },
+        where: { name: word.description },
       });
-
-      const inputWord = updateLessonDto.words.find(
-        (item) => item.description === word,
-      );
 
       await this.lessonWordsRepository.save({
         wordId: wordDB?.id,
         lessonId: lesson.id,
-        description: word,
-        type: inputWord?.type,
-        pronunciation: inputWord?.pronunciation,
-        translation: inputWord?.translation,
+        description: word.description?.toLowerCase(),
+        type: word?.type,
+        pronunciation: word?.pronunciation?.toLowerCase(),
+        pronunciationLink: word?.pronunciationLink,
+        translation: word?.translation?.toLowerCase(),
+      });
+    }
+
+    // update words
+    for (const word of updateWords) {
+      await this.lessonWordsRepository.update(word.id, {
+        ...word,
       });
     }
 
@@ -179,6 +184,7 @@ export class LessonService {
         lessonWordId: content.lessonWordId,
         type: content.type,
         question: content.question,
+        pronunciationLink: content.pronunciationLink,
       });
       await this.lessonAnswersRepository.save({
         questionId: question?.id,
@@ -191,9 +197,5 @@ export class LessonService {
     // });
 
     return id;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} lesson`;
   }
 }

@@ -17,5 +17,7 @@ class ContentDTO {
   @ApiProperty()
   question: string | null;
   @ApiProperty()
+  pronunciationLink: string | null;
+  @ApiProperty()
   answer: string | null;
 }

@@ -6,9 +6,11 @@ export class CreateLessonDto {
 
   @ApiProperty()
   words: {
+    id?: number;
     description: string;
     type?: string;
     pronunciation?: string;
+    pronunciationLink?: string;
     translation?: string;
   }[];
 

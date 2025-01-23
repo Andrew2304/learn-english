@@ -22,6 +22,9 @@ export class LessonQuestion extends BaseEntity {
   @Column({ type: 'text', name: 'question', nullable: true })
   public question: string | null;
 
+  @Column({ type: 'text', name: 'pronunciation_link', nullable: true })
+  public pronunciationLink: string | null;
+
   @Column({ type: 'text', name: 'description', nullable: true })
   public description: string | null;
 
