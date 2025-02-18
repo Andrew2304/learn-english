@@ -17,3 +17,8 @@ export class CreateLessonDto {
   @ApiProperty()
   description?: string;
 }
+
+export class CreateSampleDto {
+  @ApiProperty()
+  text: string;
+}
