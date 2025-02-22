@@ -21,6 +21,7 @@ import * as dayjs from 'dayjs';
 import { promises as fs } from 'fs';
 import * as gtts from 'gtts';
 import axios from 'axios';
+import { extractIPARegex } from '../../helpers';
 
 @Controller('lesson')
 export class LessonController {
@@ -164,6 +165,29 @@ export class LessonController {
       } else {
         console.log('No grammar mistakes found! ✅');
       }
+    } catch (error) {
+      console.error('Error checking grammar:', error.message);
+    }
+  }
+
+  @Post('/ipa')
+  async getIPA(
+    @Body() input: CreateSampleDto,
+    @HeadersDecorator('user-id') userId: number,
+  ) {
+    try {
+      const response = await axios.post(
+        `https://www.phonetizer.com/phonetizer/default/call/jsonrpc?nocache=${dayjs().valueOf()}`,
+        {
+          service: '',
+          method: 'transcribe',
+          id: 6,
+          params: [input.text, 'American', false],
+        },
+      );
+
+      console.log(response?.data?.result);
+      return extractIPARegex(response?.data?.result);
     } catch (error) {
       console.error('Error checking grammar:', error.message);
     }

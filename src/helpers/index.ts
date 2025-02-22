@@ -42,3 +42,8 @@ export enum EQuestionType {
 }
 
 export const USER_ID = 1;
+
+export const extractIPARegex = (html: string) => {
+  const match = html.match(/<span class="transcr">(.*?)<\/span>/);
+  return match ? match[1].trim() : null;
+};
